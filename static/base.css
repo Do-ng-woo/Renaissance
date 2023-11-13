@@ -2,5 +2,10 @@
     font-family: 'Lobster', cursive;
 }
 
+@media screen and (max-width:500px){
+    html {
+        font-size:13px
+    }
+}
 /* source web_1/bin/activate  */ 
 /* python manage.py runserver 0:80 */
