@@ -1,31 +1,44 @@
+<style>
+a {
+    color: black;
+    text-decoration-line: none;
+}
+
+.a.hover {
+    color:black;
+    text-decoration: none;
+    }
+ 
+</style>
+
 <div style="text-align:center; margin: 2rem 0;"> 
     <div>
         <h1 style="font-family: 'Lobster', cursive;">pragmatic</h1>
     
     </div>
     <div>
-        <a href="{% url 'accountapp:hello_world' %}">
-        <span>Home</span>
+        <a href="{% url 'accountapp:hello_world' %}" style="margin: 0rem 0.5rem">
+            <span>Home</span>
         </a>
-        <a href="{% url 'articleapp:list' %}">
+        <a href="{% url 'articleapp:list' %}" style="margin: 0rem 0.5rem">
             <span>Articles</span>
         </a>
-        <span>nav1</span>
-        <span>nav2</span>
-        <span>nav3</span>
-        
+        <a href="{% url 'projectapp:list' %}" style="margin: 0rem 0.5rem">
+            <span>Project</span>
+        </a>
+                
         {% if not user.is_authenticated %}
-        <a href="{% url 'accountapp:login' %}?next={{ request.path }}">
+        <a href="{% url 'accountapp:login' %}?next={{ request.path }}" style="margin: 0rem 0.5rem">
             <span>login</span>
         </a>
-        <a href="{% url 'accountapp:create' %}">
+        <a href="{% url 'accountapp:create' %}" style="margin: 0rem 0.5rem">
             <span>Sign Up</span>
         </a>
         {% else %}
-        <a href="{% url 'accountapp:detail' pk=user.pk %}">
+        <a href="{% url 'accountapp:detail' pk=user.pk %}" style="margin: 0rem 0.5rem">
             <span>MyPage</span>
         </a>
-        <a href="{% url 'accountapp:logout' %}?next={{ request.path }}">
+        <a href="{% url 'accountapp:logout' %}?next={{ request.path }}" style="margin: 0rem 0.5rem">
             <span>logout</span>
         </a>
         {% endif %} 
