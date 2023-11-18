@@ -3,18 +3,19 @@
 {% block content %}
 <div>
     <div style="text-align: center; max-width:500px; margin: 4rem auto">
+        {% if target_user == user %}
         <p>
             {{ target_user.date_joined }}
         </p>
-        
-        
+        {% endif %}
         
         {% if target_user.profile %}
         <img src="{{ target_user.profile.image.url }}" alt="" style="height: 12rem; width:12rem; border-radius: 20rem; margin-bottom: 2rem; object-fit: cover;">
         <h2 style="font-family: ' NanumSquareB' ">
             {{ target_user.profile.nickname}}
             {% if target_user == user %}
-            <a href="{% url 'profileapp:update' pk=target_user.profile.pk %}">
+            <a class="material-icons" style="box-shadow: 0 0 4px #ccc; border-radius: 10rem; padding: .4rem"
+               href="{% url 'profileapp:update' pk=target_user.profile.pk %}">
             edit
             </a>
             {% endif %}
@@ -42,15 +43,13 @@
         {% endif %}
             
         {% if target_user == user %}
-        <a href="{% url 'accountapp:update' pk=user.pk %}">
-           <p>
-        change Info
-           </p>
+        <a class="material-icons" style="box-shadow: 0 0 4px #ccc; border-radius: 10rem; padding: .4rem"
+           href="{% url 'accountapp:update' pk=user.pk %}">
+           settings
         </a>
-        <a href="{% url 'accountapp:delete' pk=user.pk %}">
-           <p>
-        Quit
-           </p>
+        <a class="material-icons" style="box-shadow: 0 0 4px #fcc; border-radius: 10rem; padding: .4rem"
+           href="{% url 'accountapp:delete' pk=user.pk %}">
+              cancel
         </a>
         {% endif %}
     </div>
