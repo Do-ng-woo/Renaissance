@@ -1,4 +1,4 @@
-"""pragmatic URL Configuration
+"""Renaissance URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/2.2/topics/http/urls/
@@ -30,5 +30,7 @@ urlpatterns = [
     path('comments/', include('commentapp.urls')),
     path('projects/', include('projectapp.urls')),
     path('subscribe/', include('subscribeapp.urls')),
+    path('artists/', include('artistapp.urls')),
+    
         
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

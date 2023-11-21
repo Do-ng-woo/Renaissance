@@ -10,7 +10,7 @@ from django.views.generic.list import MultipleObjectMixin
 from projectapp.forms import ProjectCreationForm
 from projectapp.models import Project
 from articleapp.models import Article
-from subscribeapp.models import Subscription
+from subscribeapp.models import P_Subscription
 
 
 # Create your views here.
@@ -36,7 +36,7 @@ class ProjectDetailView(DetailView, MultipleObjectMixin):
         user = self.request.user
         
         if user.is_authenticated:
-            subscription = Subscription.objects.filter(user=user, project=project)
+            subscription = P_Subscription.objects.filter(user=user, project=project)
         else:
             subscription = None
         object_list = Article.objects.filter(project=self.get_object())
