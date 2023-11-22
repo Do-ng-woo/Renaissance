@@ -20,6 +20,7 @@ class ArticleCreateView(CreateView):
     form_class = ArticleCreationForm
     template_name = 'articleapp/create.html'
     
+    
     def form_valid(self,form):
         temp_article = form.save(commit=False)
         temp_article.writer = self.request.user

@@ -5,6 +5,11 @@ from artistapp.models import Artist
 from django import forms
 
 
+class DateInput(forms.DateInput):
+    input_type = 'date'
+class TimeInput(forms.DateInput):
+    input_type = 'time'
+
 class ArticleCreationForm(ModelForm):
     content = forms.CharField(widget=forms.Textarea(attrs={'class': 'editable text-start','style':'height:auto'}))
     
@@ -12,4 +17,8 @@ class ArticleCreationForm(ModelForm):
     artist = forms.ModelChoiceField(queryset=Artist.objects.all(),required=False)
     class Meta:
         model = Article
-        fields = ['title', 'image', 'project','artist','content']
+        fields = ['title', 'image', 'project','artist','content','date','time']
+        widgets = {
+            'date' : DateInput(), 
+            'time' : TimeInput()
+        }

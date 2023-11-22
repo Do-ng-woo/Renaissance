@@ -13,11 +13,17 @@
         
         <img style="width: 100%; border-radius: 1rem; margin: 2rem 0;"
              src="{{ target_article.image.url }}" alt="">
-        
+        <div style="margin: 1rem 2rem;">
+            <h2>
+                공연 날짜: {{ target_article.date }}
+            </h2>
+            <h2>
+                공연 시간: {{ target_article.time }}
+            </h2>
+        </div>
         <div style='text-align:start'>
             {{ target_article.content | safe }}
         </div>
-        
         {% if target_article.writer == user %}
         <a href="{% url 'articleapp:update' pk=target_article.pk %}"
            class= "btn btn-primary rounded-pill col-3">

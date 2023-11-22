@@ -16,3 +16,5 @@ class Article(models.Model):
     content = models.TextField(null=True)
     
     created_at = models.DateField(auto_now_add=True, null=True)
+    date = models.DateField(blank=True, null=True)
+    time = models.DateField(blank=True, null=True)
