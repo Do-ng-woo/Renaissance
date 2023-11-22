@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 # Create your views here.
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.views.generic import RedirectView, ListView
+from django.views.generic import RedirectView, ListView, TemplateView
 from django.shortcuts import get_object_or_404
 
 from subscribeapp.models import P_Subscription, A_Subscription
@@ -72,3 +72,4 @@ class A_SubscriptionListView(ListView):
         artists = A_Subscription.objects.filter(user=self.request.user).values_list('artist')
         article_list = Article.objects.filter(artist__in=artists)
         return article_list
+    

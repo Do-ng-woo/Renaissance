@@ -8,4 +8,5 @@ urlpatterns = [
     path('P_list/', P_SubscriptionListView.as_view(), name='P_list'),
     path('A_subscribe/', A_SubscriptionView.as_view(), name='A_subscribe'),
     path('A_list/', A_SubscriptionListView.as_view(), name='A_list'),
+
 ]
