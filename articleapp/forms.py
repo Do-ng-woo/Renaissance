@@ -7,7 +7,7 @@ from django import forms
 
 class DateInput(forms.DateInput):
     input_type = 'date'
-class TimeInput(forms.DateInput):
+class TimeInput(forms.TimeInput):
     input_type = 'time'
 
 class ArticleCreationForm(ModelForm):
@@ -17,7 +17,7 @@ class ArticleCreationForm(ModelForm):
     artist = forms.ModelChoiceField(queryset=Artist.objects.all(),required=False)
     class Meta:
         model = Article
-        fields = ['title', 'image', 'project','artist','content','date','time']
+        fields = ['title', 'image', 'project','artist','content','date']
         widgets = {
             'date' : DateInput(), 
             'time' : TimeInput()

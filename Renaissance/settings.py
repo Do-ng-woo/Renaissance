@@ -14,6 +14,9 @@ from django.urls import reverse, reverse_lazy
 from pathlib import Path
 import os
 
+from django.contrib.messages import constants as messages
+
+
 import environ
 env = environ.Env(
     DEBUG=(bool,False)
@@ -56,6 +59,7 @@ INSTALLED_APPS = [
     'projectapp',
     'subscribeapp',
     'artistapp',
+    'likeapp',
 ]
 
 MIDDLEWARE = [
@@ -124,13 +128,13 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Seoul'
 
 USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = True
+USE_TZ = False
 
 
 # Static files (CSS, JavaScript, Images)
@@ -148,3 +152,9 @@ LOGOUT_REDIRECT_URL = reverse_lazy('accountapp:login')
 MEDIA_URL = '/media/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+TIME_INPUT_FORMATS =[ '%H:%M:%S.%f' ]
+
+MESSAGE_TAGS = {
+    messages.ERROR: 'danger',
+}
