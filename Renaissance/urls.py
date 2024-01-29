@@ -32,6 +32,8 @@ urlpatterns = [
     path('subscribe/', include('subscribeapp.urls')),
     path('artists/', include('artistapp.urls')),
     path('likes/', include('likeapp.urls')),
+    path('persons/', include('personapp.urls')),
+    
     
     
         

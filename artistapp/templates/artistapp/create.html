@@ -2,8 +2,30 @@
 {% load bootstrap4 %}
 
 {% block content %}
-
-<div style="text-align: center; max-width:500px; margin: 4rem auto">
+<!-- Medium Editor의 JavaScript -->
+<script src="//cdn.jsdelivr.net/npm/medium-editor@5.23.2/dist/js/medium-editor.min.js"></script>
+<!-- Medium Editor의 CSS -->
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/medium-editor@5.23.2/dist/css/medium-editor.min.css" type="text/css" media="screen" charset="utf-8">
+<style>
+    .input-group {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: stretch;
+        width: 100%;
+    }
+    .input-group .form-control {
+        flex: 1 1 auto;
+        width: 1%;
+        margin-right: 10px;
+    }
+    .editable {
+        flex-grow: 2;
+        border: 2px solid #000000; /* 진한 테두리 적용 */
+        padding: 10px;
+        min-height: 100px;
+    }
+</style>
+<div style="text-align: center; max-width:700px; margin: 4rem auto">
     <div class="mb-4">
         <h4>
             Artist Create
@@ -12,8 +34,163 @@
     <form action="{%url 'artistapp:create' %}" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {% bootstrap_form form %}
+        <div id="dynamic_member_container">
+        <!-- 멤버 필드가 여기에 동적으로 추가됩니다 -->
+        </div>
+        <button type="button" id="add_member_button" class="btn btn-info rounded-pill mt-2">+ 멤버 추가</button>
+        <div id="dynamic_fields_container">
+            <!-- 동적 필드가 추가될 컨테이너 -->
+        </div>
+        <button type="button" id="add_field_button" class="btn btn-info rounded-pill mt-2">+ 추가 정보</button>
+        
         <input type="submit" class="btn btn-dark rounded-pill col-6 mt-3">
     </form>
 </div>
+
+<script>
+    $(document).ready(function() {
+        let counter = 0; // 추가 정보에 사용되는 카운터
+        let memberCounter = 0; // 멤버 추가에 사용되는 카운터
+
+        // Select2 초기화 함수
+        function initializeSelect2() {
+            $('.person-selection').select2({
+                width: '100%', // Select2의 너비 설정
+                placeholder: "멤버 선택", // placeholder 텍스트
+                allowClear: true // 선택 초기화 기능
+            });
+        }
+
+        // 추가 정보 버튼 클릭 이벤트
+        $('#add_field_button').click(function(e) {
+            e.preventDefault();
+            let newFieldHtml = `
+                <div class="input-group mb-2" id="description_${counter}">
+                    <input type="text" name="detailed_descriptions[${counter}][name]" class="form-control" placeholder="정보의 이름" required />
+                    <div class="editable" style="min-height: 100px;" data-placeholder="설명"></div>
+                    <textarea name="detailed_descriptions[${counter}][value]" style="display:none;"></textarea>
+                    <div class="input-group-append">
+                        <button type="button" class="btn btn-danger remove-field-btn" data-id="${counter}">삭제</button>
+                    </div>
+                </div>
+            `;
+            $('#dynamic_fields_container').append(newFieldHtml);
+
+            // 새로운 editable 요소에 대한 Medium Editor 초기화 및 이벤트 바인딩
+            var newEditable = $(`#description_${counter} .editable`);
+            new MediumEditor(newEditable.get(0)).subscribe('editableInput', function(event, editable) {
+                $(editable).next('textarea').val(editable.innerHTML);
+            });
+
+            counter++;
+        });
+
+        // 동적으로 생성된 삭제 버튼에 대한 이벤트 핸들러 설정
+        $('#dynamic_fields_container').on('click', '.remove-field-btn', function() {
+            let fieldId = $(this).data('id');
+            $('#description_' + fieldId).remove();
+        });
+
+       // 멤버 추가 버튼 클릭 이벤트
+        $('#add_member_button').click(function(e) {
+            e.preventDefault();
+            let memberHtml = `
+                <div class="member-entry mb-3 d-flex align-items-end" id="member_${memberCounter}">
+                    <div class="col">
+                        <select class="form-control selection-method" name="selection_method_${memberCounter}">
+                            <option value="">불러오기/직접 입력하기</option>
+                            <option value="load">불러오기</option>
+                            <option value="manual_entry">직접 입력하기</option>
+                        </select>
+                    </div>
+                    <div class="col position-select" style="display: none;">
+                        <select class="form-control position-selection" name="position_${memberCounter}">
+                            <option value="">포지션 선택</option>
+                            {% for position, position_display in positions %}
+                            <option value="{{ position }}">{{ position_display }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col person-select" style="display: none;">
+                        <select class="form-control person-selection" name="person_id_${memberCounter}">
+                            <option value="">멤버 선택</option>
+                            {% for person in persons %}
+                            <option class="person-option" data-position="{{ person.position }}" value="{{ person.id }}" style="display: none;">{{ person.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col manual-entry-fields" style="display: none;">
+                        <input type="text" class="form-control" name="manual_position_${memberCounter}" placeholder="포지션" />
+                    </div>
+                    <div class="col manual-entry-fields" style="display: none;">
+                        <input type="text" class="form-control" name="manual_name_${memberCounter}" placeholder="이름" />
+                    </div>
+                    <div class="col-auto">
+                        <button type="button" class="btn btn-danger remove-member-btn" data-id="${memberCounter}">삭제</button>
+                    </div>
+                </div>
+            `;
+
+            $('#dynamic_member_container').append(memberHtml);
+            memberCounter++;
+
+            // 새로운 멤버 항목에 대해 Select2 적용
+            initializeSelect2($('.person-selection').last());
+    });
+
+        // 멤버 삭제 버튼 이벤트
+        $('#dynamic_member_container').on('click', '.remove-member-btn', function() {
+            let memberId = $(this).data('id');
+            $('#member_' + memberId).remove();
+        });
+        // 선택 방법 변경 이벤트
+        $(document).on('change', '.selection-method', function() {
+            let method = $(this).val();
+            let parentEntry = $(this).closest('.member-entry');
+
+            parentEntry.find('.position-select, .person-select, .manual-entry-fields').hide();
+            
+            if (method === 'load') {
+                parentEntry.find('.position-select').show();
+            } else if (method === 'manual_entry') {
+                parentEntry.find('.manual-entry-fields').show();
+            }
+        });
+         // 포지션 선택 변경 이벤트
+        $(document).on('change', '.position-selection', function() {
+            let selectedPosition = $(this).val();
+            let parentEntry = $(this).closest('.member-entry');
+            let personSelectDropdown = parentEntry.find('.person-selection');
+
+            // Select2 인스턴스를 파괴합니다.
+            personSelectDropdown.select2('destroy');
+
+            // 모든 옵션을 일단 제거합니다.
+            personSelectDropdown.empty();
+            personSelectDropdown.append('<option value="">멤버 선택</option>');
+
+            // 선택된 포지션에 해당하는 Person만을 옵션으로 추가합니다.
+            {% for person in persons %}
+                if ("{{ person.position }}" === selectedPosition) {
+                    personSelectDropdown.append('<option value="{{ person.id }}">{{ person.title }}</option>');
+                }
+            {% endfor %}
+
+            // person-select 드롭다운을 보이게 합니다.
+            parentEntry.find('.person-select').show();
+
+            // Select2를 새롭게 초기화합니다.
+            initializeSelect2(personSelectDropdown);
+        });
+        
+
+        // 초기 페이지 로드 시에도 Select2 초기화
+        initializeSelect2($('.person-selection'));
+    });
+</script>
+
+
+
+
 
 {% endblock %}

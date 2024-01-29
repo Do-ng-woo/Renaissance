@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 
 from projectapp.models import Project
 from artistapp.models import Artist
+from personapp.models import Person
 
 class P_Subscription(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='P_subscripton')
@@ -18,6 +19,12 @@ class A_Subscription(models.Model):
     
     class Meta:
         unique_together = ('user', 'artist')
-        
+
+class Per_Subscription(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='Per_subscripton')
+    person = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='Per_subscripton')
+    
+    class Meta:
+        unique_together = ('user', 'person')
         
         

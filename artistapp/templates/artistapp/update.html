@@ -1,0 +1,535 @@
+{% extends 'base.html' %}
+{% load bootstrap4 %}
+
+{% block content %}
+<style>
+    .input-group {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: stretch;
+        width: 100%;
+    }
+    .input-group .form-control {
+        flex: 1 1 auto;
+        width: 1%;
+        margin-right: 10px;
+    }
+    .editable {
+        flex-grow: 2;
+        border: 2px solid #000000; /* 진한 테두리 적용 */
+        padding: 10px;
+        min-height: 100px;
+    }
+</style>
+
+<script src="//cdn.jsdelivr.net/npm/medium-editor@5.23.2/dist/js/medium-editor.min.js"></script>
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/medium-editor@5.23.2/dist/css/medium-editor.min.css" type="text/css" media="screen" charset="utf-8">
+
+<div style="text-align: center; max-width:500px; margin: 4rem auto">
+    <div class="mb-4">
+        <h4>Artist Update</h4>
+    </div>
+    <form id="update_form" action="{% url 'artistapp:update' pk=target_artist.pk %}" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% bootstrap_form form %}
+        <input type="hidden" id="hidden_default_persons" name="hidden_default_persons" value="">
+        <input type="hidden" id="hidden_default_text_persons" name="hidden_default_text_persons" value="">
+        <input type="hidden" id="hidden_persons_changed" name="hidden_persons_changed" value="">
+        <input type="hidden" id="hidden_text_persons_changed" name="hidden_text_persons_changed" value="">
+        <input type="hidden" id="hidden_persons_deleted" name="hidden_persons_deleted" value="">
+        <input type="hidden" id="hidden_text_persons_deleted" name="hidden_text_persons_deleted" value="">
+        <input type="hidden" id="hidden_current_persons" name="hidden_current_persons" value="">
+        <input type="hidden" id="hidden_current_text_persons" name="hidden_current_text_persons" value="">
+        <input type="hidden" id="final_persons" name="final_persons" value="">
+        <input type="hidden" id="final_text_persons" name="final_text_persons" value="">
+        
+        <!-- 기존 멤버를 표시하는 부분   -->
+        <div id="bring_member_container">
+            <!-- 서버에서 전달된 persons_with_positions 데이터를 기반으로 멤버와 포지션 정보 표시 -->
+            {% for person in persons_with_positions %}
+                <div class="member-entry mb-3 d-flex align-items-end" id="member_bring_{{ forloop.counter0 }}">
+                    <!-- 선택 방법, 포지션, 멤버 선택 드롭다운 -->
+                    <div class="col">
+                        <select class="form-control selection-method" name="selection_method_{{ forloop.counter0 }}">
+                            <option value="">불러오기/직접 입력하기</option>
+                            <option value="load" selected>불러오기</option>
+                            <option value="manual_entry">직접 입력하기</option>
+                        </select>
+                    </div>
+                    <div class="col position-select">
+                        <select class="form-control position-selection" name="position_{{ forloop.counter0 }}">
+                            <option value="">포지션 선택</option>
+                            {% for position, position_display in positions %}
+                            <option value="{{ position }}" {% if position == person.position %}selected{% endif %}>{{ position_display }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col person-select">
+                        <select class="form-control person-selection" name="person_id_{{ forloop.counter0 }}">
+                            <option value="">멤버 선택</option>
+                            {% for person_option in persons %}
+                            <option class="person-option" data-position="{{ person_option.position }}" value="{{ person_option.id }}" {% if person_option.id == person.person_id %}selected{% endif %}>{{ person_option.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <!-- 직접 입력한 포지션 필드 -->
+                    <div class="col manual-entry-fields" style="{% if not text_person.manual_entry %}display: none;{% endif %}">
+                        <input type="text" class="form-control text-position-input" name="manual_position_{{ forloop.counter0 }}"placeholder="포지션">
+                    </div>
+                    <!-- 직접 입력한 이름 필드 -->
+                    <div class="col manual-entry-fields" style="{% if not text_person.manual_entry %}display: none;{% endif %}">
+                        <input type="text" class="form-control text-person-input" name="manual_name_{{ forloop.counter0 }}" placeholder="이름">
+                    </div>
+                    <!-- 삭제 버튼 -->
+                    <div class="col-auto">
+                        <button type="button" class="btn btn-danger remove-member-btn" data-id="member_bring_{{ forloop.counter0 }}">삭제</button>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <!-- 저장된 "직접 입력하기" 데이터를 불러오는 부분 -->
+        <div id="text_member_container">
+            {% for text_person in text_persons_data %}
+            <div class="member-entry mb-3 d-flex align-items-end" id="member_text_{{ forloop.counter0 }}">
+                <div class="col">
+                    <!-- 선택 방법 선택 -->
+                    <select class="form-control selection-method" name="selection_method_{{ forloop.counter0 }}">
+                        <option value="">불러오기/직접 입력하기</option>
+                        <option value="load">불러오기</option>
+                        <option value="manual_entry" selected>직접 입력하기</option>
+                    </select>
+                </div>
+                <!-- 포지션 선택 -->
+                <div class="col position-select" style="{% if text_person.manual_entry %}display: none;{% endif %}">
+                    <select class="form-control position-selection" name="position_{{ forloop.counter0 }}">
+                        <option value="">포지션 선택</option>
+                        {% for position, position_display in positions %}
+                        <option value="{{ position }}" >{{ position_display }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <!-- 멤버 선택 -->
+                <div class="col person-select" style="{% if text_person.manual_entry %}display: none;{% endif %}">
+                    <select class="form-control person-selection" name="person_id_{{ forloop.counter0 }}">
+                        <option value="">멤버 선택</option>
+                        {% for person_option in persons %}
+                        <option class="person-option" value="{{ person_option.id }}" >{{ person_option.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <!-- 직접 입력한 포지션 필드 -->
+                <div class="col manual-entry-fields" style="{% if not text_person.manual_entry %}display: none;{% endif %}">
+                    <input type="text" class="form-control text-position-input" name="manual_position_{{ forloop.counter0 }}" placeholder="포지션" value="{{ text_person.position }}" />
+                </div>
+                <!-- 직접 입력한 이름 필드 -->
+                <div class="col manual-entry-fields" style="{% if not text_person.manual_entry %}display: none;{% endif %}">
+                    <input type="text" class="form-control text-person-input" name="manual_name_{{ forloop.counter0 }}" placeholder="이름" value="{{ text_person.name }}" />
+                </div>
+                <!-- 삭제 버튼 -->
+                <div class="col-auto">
+                    <button type="button" class="btn btn-danger remove-member-btn" data-id="member_text_{{ forloop.counter0 }}">삭제</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div><!--직접 입력한 멤버 담는 섹션 종료  -->
+        <!--새로 생성하는 멤버를 추가하는 곳      -->
+        <div id="dynamic_member_container">
+        </div>
+        <!--  멤버추가버튼        -->
+        <button type="button" id="add_member_button" class="btn btn-info rounded-pill mt-2">+ 멤버 추가</button>
+
+            <!-- 기존 데이터를 표시하는 부분 -->
+        <div id="dynamic_fields_container">
+            {% for description in target_artist.detailed_descriptions.all %}
+            <div class="input-group mb-2" id="description_{{ description.id }}">
+                <input type="hidden" name="detailed_descriptions[{{ forloop.counter0 }}][id]" value="{{ description.id }}" />
+                <input type="text" name="detailed_descriptions[{{ forloop.counter0 }}][name]" class="form-control" placeholder="이름" required value="{{ description.name }}" />
+                <div class="editable" style="min-height: 100px;" data-placeholder="설명">{{ description.text }}</div>
+                <textarea name="detailed_descriptions[{{ forloop.counter0 }}][value]" style="display:none;"></textarea>
+                <div class="input-group-append">
+                    <button type="button" class="btn btn-danger" onclick="deleteDescription({{ description.id }})">삭제</button>
+                </div>
+            </div>
+            {% endfor %}              
+        </div><!-- 기존 데이터 표시 끝 -->
+        
+        <button type="button" id="add_field_button" class="btn btn-info rounded-pill mt-2">+ 추가 정보</button>
+        <input type="submit" class="btn btn-dark rounded-pill col-6 mt-3">
+    </form>
+</div>
+
+<script>
+(function() {
+    // Private variables
+    var descriptionTexts = [
+        {% for description in target_artist.detailed_descriptions.all %}
+            "{{ description.text|escapejs }}"{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+    var counter = descriptionTexts.length;
+
+    // Private functions
+    function initMediumEditor(element, textArea) {
+        var editor = new MediumEditor(element);
+        editor.subscribe('editableInput', function(event, editable) {
+            textArea.val(editable.innerHTML);
+        });
+    }
+
+    function addDescriptionField() {
+        var newFieldHtml = `
+            <div class="input-group mb-2" id="description_${counter}">
+                <input type="text" name="detailed_descriptions[${counter}][name]" class="form-control" placeholder="정보의 이름" required />
+                <div class="editable" style="min-height: 100px;" data-placeholder="설명"></div>
+                <textarea name="detailed_descriptions[${counter}][value]" style="display:none;"></textarea>
+                <div class="input-group-append">
+                    <button type="button" class="btn btn-danger delete-description-btn" data-id="${counter}">삭제</button>
+                </div>
+            </div>
+        `;
+        $('#dynamic_fields_container').append(newFieldHtml);
+        // 새로 생성된 항목에 'new-description' 클래스 추가
+        $('#description_' + counter).addClass('new-description');
+        
+        var newEditable = $(`#description_${counter} .editable`);
+        var newTextarea = newEditable.next('textarea');
+        initMediumEditor(newEditable.get(0), newTextarea);
+        counter++;
+    }
+
+    // Public Exposure
+    window.addDescriptionField = addDescriptionField;
+
+    $(document).ready(function() {
+        $('.editable').each(function(index) {
+            var textArea = $(this).next('textarea');
+            textArea.val(descriptionTexts[index]);
+            initMediumEditor(this, textArea);
+            $(this).html(textArea.val());
+        });
+
+        $('#add_field_button').click(function(e) {
+            e.preventDefault();
+            window.addDescriptionField();
+        });
+        // 동적으로 생성된 '삭제' 버튼에 대한 이벤트 핸들링
+        $('#dynamic_fields_container').on('click', '.delete-description-btn', function() {
+            var descriptionId = $(this).data('id');
+            window.deleteDescription(descriptionId);
+        });
+
+        window.deleteDescription = function(descriptionId) {
+            // 새로 생성된 항목이 아직 서버에 저장되지 않았는지 확인
+            if ($('#description_' + descriptionId).hasClass('new-description')) {
+                $('#description_' + descriptionId).remove();
+                alert('새 설명이 아직 저장되지 않았습니다.');
+            } else {
+                // 서버에 저장된 항목을 삭제하는 AJAX 요청
+                $.ajax({
+                    url: '{% url "artistapp:delete_description" %}',
+                    type: 'POST',
+                    data: {
+                        'id': descriptionId,
+                        'csrfmiddlewaretoken': '{{ csrf_token }}'
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        if(response.status === 'success') {
+                            $('#description_' + descriptionId).remove();
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        var errorMsg = 'AJAX 요청 실패';
+                        alert(errorMsg);
+                    }
+                });
+            }
+        };
+     });
+})();
+</script>
+<script>
+$(document).ready(function() {
+    // 초기 상태 업데이트
+    let initialPersonIds = $('.person-selection').map(function() { return $(this).val(); }).get().filter(Boolean).join(',');
+    let initialTextPersons = $('.member-entry').map(function() {
+        var position = $(this).find('.text-position-input').val();
+        var name = $(this).find('.text-person-input').val();
+        return position && name ? position + ':' + name : ''; // 포지션과 이름 결합
+    }).get().filter(Boolean).join(',');
+
+    $('#hidden_default_persons').val(initialPersonIds);
+    $('#hidden_default_text_persons').val(initialTextPersons);
+    
+        
+        let memberCounter = 0; // 멤버 추가에 사용되는 카운터
+
+        // Select2 초기화 함수
+        function initializeSelect2() {
+            $('.person-selection').select2({
+                width: '100%', // Select2의 너비 설정
+                placeholder: "멤버 선택", // placeholder 텍스트
+                allowClear: true // 선택 초기화 기능
+            });
+        }
+
+        // 멤버 추가 버튼 클릭 이벤트
+        $('#add_member_button').click(function(e) {
+            e.preventDefault();
+            let memberHtml = `
+                <div class="member-entry mb-3 d-flex align-items-end" id="member_${memberCounter}">
+                    <div class="col">
+                        <select class="form-control selection-method" name="selection_method_${memberCounter}">
+                            <option value="">불러오기/직접 입력하기</option>
+                            <option value="load">불러오기</option>
+                            <option value="manual_entry">직접 입력하기</option>
+                        </select>
+                    </div>
+                    <div class="col position-select" style="display: none;">
+                        <select class="form-control position-selection" name="position_${memberCounter}">
+                            <option value="">포지션 선택</option>
+                            {% for position, position_display in positions %}
+                            <option value="{{ position }}">{{ position_display }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col person-select" style="display: none;">
+                        <select class="form-control person-selection" name="person_id_${memberCounter}">
+                            <option value="">멤버 선택</option>
+                            {% for person in persons %}
+                            <option class="person-option" data-position="{{ person.position }}" value="{{ person.id }}" style="display: none;">{{ person.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col manual-entry-fields" style="display: none;">
+                        <input type="text" class="form-control text-position-input" name="manual_position_${memberCounter}" placeholder="포지션" />
+                    </div>
+                    <div class="col manual-entry-fields" style="display: none;">
+                        <input type="text" class="form-control text-person-input" name="manual_name_${memberCounter}" placeholder="이름" />
+                    </div>
+                    <div class="col-auto">
+                        <button type="button" class="btn btn-danger remove-member-btn" data-id="${memberCounter}">삭제</button>
+                    </div>
+                </div>
+            `;
+
+            $('#dynamic_member_container').append(memberHtml);
+            memberCounter++;
+
+            // 새로운 멤버 항목에 대해 Select2 적용
+            initializeSelect2($('.person-selection').last());
+        });
+    
+        // person 선택의 초기값 저장
+        $('.person-selection').each(function() {
+            var initialPersonId = $(this).val(); // 초기 person ID
+            $(this).data('initialPersonId', initialPersonId);
+        });
+    
+        // 선택 방법 변경 감지
+        $(document).on('change', '.selection-method', function() {
+            var $entry = $(this).closest('.member-entry');
+            var selectionMethod = $(this).val();
+            var previousPersonId = $entry.find('.person-selection').data('initialPersonId'); // 이전 person ID
+            var previousPosition = $entry.find('.text-position-input').val(); // 이전 포지션 값
+            var previousName = $entry.find('.text-person-input').val(); // 이전 이름 값
+            var previousTextPerson = previousPosition && previousName ? previousPosition + ':' + previousName : ''; // 이전 포지션과 이름 결합
+
+            toggleFields($entry, selectionMethod);
+
+            // '불러오기'에서 '직접 입력하기'로 변경된 경우
+            if (selectionMethod === 'manual_entry' && previousPersonId) {
+                $('#hidden_persons_changed').val($('#hidden_persons_changed').val() + previousPersonId + ',');
+            }
+
+            // '직접 입력하기'에서 '불러오기'로 변경된 경우
+            if (selectionMethod === 'load' && previousTextPerson) {
+                $('#hidden_text_persons_changed').val($('#hidden_text_persons_changed').val() + previousTextPerson + ',');
+            }
+        });
+    
+        
+        function toggleFields($entry, method) {
+            $entry.find('.position-select, .person-select, .manual-entry-fields').hide();
+
+            if (method === 'load') {
+                // '불러오기' 선택 시 포지션 선택 드롭다운 표시
+                $entry.find('.position-select').show();
+                // 만약 포지션 선택이 이미 되어 있다면 person-select 드롭다운도 표시
+                var position = $entry.find('.position-selection').val();
+                if (position) {
+                    $entry.find('.person-select').show();
+                }
+            } else if (method === 'manual_entry') {
+                // '직접 입력하기' 선택 시 이름과 포지션 입력 필드 표시
+                $entry.find('.manual-entry-fields').show();
+            }
+        }
+
+        // 페이지 로드 시 각 멤버 엔트리 초기화
+        $('.member-entry').each(function() {
+            var $entry = $(this);
+            var selectionMethod = $entry.find('.selection-method').val();
+            toggleFields($entry, selectionMethod);
+        });
+
+        // 선택 방법 변경 이벤트를 수정하여 toggleFields 함수를 사용합니다.
+        $(document).on('change', '.selection-method', function() {
+            var $entry = $(this).closest('.member-entry');
+            var selectionMethod = $(this).val();
+            toggleFields($entry, selectionMethod);
+        });
+        
+        // 선택 방법 변경 이벤트
+        $(document).on('change', '.selection-method', function() {
+            let method = $(this).val();
+            let parentEntry = $(this).closest('.member-entry');
+
+            parentEntry.find('.position-select, .person-select, .manual-entry-fields').hide();
+            
+            if (method === 'load') {
+                parentEntry.find('.position-select').show();
+            } else if (method === 'manual_entry') {
+                parentEntry.find('.manual-entry-fields').show();
+            }
+        });
+         // 포지션 선택 변경 이벤트
+        $(document).on('change', '.position-selection', function() {
+            let selectedPosition = $(this).val();
+            let parentEntry = $(this).closest('.member-entry');
+            let personSelectDropdown = parentEntry.find('.person-selection');
+
+            // Select2 인스턴스를 파괴합니다.
+            personSelectDropdown.select2('destroy');
+
+            // 모든 옵션을 일단 제거합니다.
+            personSelectDropdown.empty();
+            personSelectDropdown.append('<option value="">멤버 선택</option>');
+
+            // 선택된 포지션에 해당하는 Person만을 옵션으로 추가합니다.
+            {% for person in persons %}
+                if ("{{ person.position }}" === selectedPosition) {
+                    personSelectDropdown.append('<option value="{{ person.id }}">{{ person.title }}</option>');
+                }
+            {% endfor %}
+
+            // person-select 드롭다운을 보이게 합니다.
+            parentEntry.find('.person-select').show();
+
+            // Select2를 새롭게 초기화합니다.
+            initializeSelect2(personSelectDropdown);
+        });
+        
+
+
+        // person 변경 감지
+        $('.person-selection').each(function() {
+            let originalValue = $(this).val();
+            $(this).on('change', function() {
+                let currentValue = $(this).val();
+                if (originalValue !== currentValue) {
+                    $('#hidden_persons_changed').val($('#hidden_persons_changed').val() + originalValue + ',');
+                }
+            });
+        });
+        
+          
+        $('.member-entry').each(function() {
+            let $entry = $(this);
+            let originalPosition = $entry.find('.text-position-input').val();
+            let originalName = $entry.find('.text-person-input').val();
+            let originalTextPerson = originalPosition && originalName ? originalPosition + ':' + originalName : '';
+
+            $entry.find('.text-position-input, .text-person-input').on('change', function() {
+                let currentPosition = $entry.find('.text-position-input').val();
+                let currentName = $entry.find('.text-person-input').val();
+                let currentTextPerson = currentPosition && currentName ? currentPosition + ':' + currentName : '';
+
+                if (originalTextPerson !== currentTextPerson) {
+                    $('#hidden_text_persons_changed').val($('#hidden_text_persons_changed').val() + originalTextPerson + ',');
+                }
+            });
+        });
+
+
+        // 멤버 삭제 감지
+        $(document).on('click', '.remove-member-btn', function() {
+            var memberId = $(this).data('id');
+            var originalPersonId = $('#' + memberId + ' .person-selection').val();
+
+            // person 삭제 감지
+            if (originalPersonId) {
+                $('#hidden_persons_deleted').val($('#hidden_persons_deleted').val() + originalPersonId + ',');
+            }
+
+            // text_person 삭제 감지 (포지션과 이름을 하나의 쌍으로 저장)
+            var $textEntry = $('#' + memberId + ' .manual-entry-fields');
+            var originalPosition = $textEntry.find('.text-position-input').val();
+            var originalName = $textEntry.find('.text-person-input').val();
+            var originalTextPerson = originalPosition && originalName ? originalPosition + ':' + originalName : '';
+
+            if (originalTextPerson) {
+                $('#hidden_text_persons_deleted').val($('#hidden_text_persons_deleted').val() + originalTextPerson + ',');
+            }
+
+            $('#' + memberId).remove();
+        });
+
+        $('#update_form').on('submit', function(e) {
+            e.preventDefault();
+            // 현재 상태의 person 및 text_person 데이터 수집 (text_person은 포지션과 이름 결합)
+            let currentPersons = $('.person-selection').map(function() { return $(this).val(); }).get().filter(Boolean);
+            let currentTextPersons = $('.member-entry').map(function() {
+                let positionInput = $(this).find('.text-position-input');
+                let nameInput = $(this).find('.text-person-input');
+
+                let position = positionInput.val();
+                let name = nameInput.val();
+
+                // 포지션과 이름이 모두 있는 경우에만 결합
+                if (position && name) {
+                    return position + ':' + name;
+                } else {
+                    return '';
+                }
+            }).get().filter(Boolean); // 빈 문자열을 제외하고 유효한 값만 필터링
+            // 현재 상태의 데이터를 hidden 필드에 설정
+            $('#hidden_current_persons').val(currentPersons.join(','));
+            $('#hidden_current_text_persons').val(currentTextPersons.join(','));
+
+            // 초기 상태, 삭제된 항목, 변경 전 항목 목록
+            let initialPersons = $('#hidden_default_persons').val().split(',').filter(Boolean);
+            let initialTextPersons = $('#hidden_default_text_persons').val().split(',').filter(Boolean);
+            let deletedPersons = $('#hidden_persons_deleted').val().split(',').filter(Boolean);
+            let deletedTextPersons = $('#hidden_text_persons_deleted').val().split(',').filter(Boolean);
+            let changedPersons = $('#hidden_persons_changed').val().split(',').filter(Boolean);
+            let changedTextPersons = $('#hidden_text_persons_changed').val().split(',').filter(Boolean);
+
+            // 삭제되지 않고 변경되지 않은 초기 항목
+            let remainingInitialPersons = initialPersons.filter(pid => !deletedPersons.includes(pid) && !changedPersons.includes(pid));
+            let remainingInitialTextPersons = initialTextPersons.filter(tp => !deletedTextPersons.includes(tp) && !changedTextPersons.includes(tp));
+
+            // 추가된 항목 (초기 상태에 없는 항목)
+            let addedPersons = currentPersons.filter(pid => !initialPersons.includes(pid));
+            let addedTextPersons = currentTextPersons.filter(tp => !initialTextPersons.includes(tp));
+
+            // 최종 데이터 (남은 초기 항목과 추가된 항목의 합집합)
+            let finalPersons = [...new Set([...remainingInitialPersons, ...addedPersons])];
+            let finalTextPersons = [...new Set([...remainingInitialTextPersons, ...addedTextPersons])];
+
+            $('#final_persons').val(JSON.stringify(finalPersons));
+            $('#final_text_persons').val(JSON.stringify(finalTextPersons));
+
+            this.submit();
+        });
+
+        // 초기 페이지 로드 시에도 Select2 초기화
+        initializeSelect2($('.person-selection'));
+});
+</script>
+
+
+{% endblock %}
+

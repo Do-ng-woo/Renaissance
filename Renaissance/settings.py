@@ -36,6 +36,10 @@ environ.Env.read_env(
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env('SECRET_KEY')
 
+KAKAO_JS_API_KEY = env('KAKAO_JS_API_KEY')
+
+KAKAO_API_KEY =env('KAKAO_API_KEY')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -60,6 +64,9 @@ INSTALLED_APPS = [
     'subscribeapp',
     'artistapp',
     'likeapp',
+    'django_select2',
+    'personapp',
+    
 ]
 
 MIDDLEWARE = [
@@ -77,7 +84,7 @@ ROOT_URLCONF = 'Renaissance.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR,' templates')],
+        'DIRS': [os.path.join(BASE_DIR,'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -144,7 +151,8 @@ STATIC_URL = '/static/'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static'),
+                   os.path.join(BASE_DIR, 'staticfiles/django_select2'),]
 
 LOGIN_REDIRECT_URL = reverse_lazy('home')
 LOGOUT_REDIRECT_URL = reverse_lazy('accountapp:login')
@@ -153,7 +161,11 @@ MEDIA_URL = '/media/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-TIME_INPUT_FORMATS =[ '%H:%M:%S.%f' ]
+
+DATETIME_INPUT_FORMATS = [
+    '%Y/%m/%d %H:%M',  # '2024/01/16 18:33' 형식에 맞게 설정
+    # 기타 필요한 날짜/시간 형식들을 여기에 추가
+]
 
 MESSAGE_TAGS = {
     messages.ERROR: 'danger',

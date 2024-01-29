@@ -31,6 +31,12 @@ a {
 
 
 </style>
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+    <form method="get" action="{% url 'projectapp:list' %}" style="margin-right: 10px;">
+        <input type="text" name="search_keyword" placeholder="검색어를 입력하세요">
+        <button type="submit" style="background-color: #4CAF50; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer;">검색</button>
+    </form>
+</div>
     {% if project_list %}
     <div class="container">
         

@@ -1,3 +1,4 @@
+from django.db.models import Q
 from django.shortcuts import render
 
 # Create your views here.
@@ -9,6 +10,8 @@ from django.views.generic.edit import FormMixin
 
 from commentapp.forms import CommentCreationForm
 from articleapp.forms import ArticleCreationForm
+from articleapp.forms import ArticleSearchForm
+
 from articleapp.models import Article
 from django.urls import reverse, reverse_lazy
 
@@ -30,6 +33,8 @@ class ArticleCreateView(CreateView):
     def get_success_url(self):
         return reverse('articleapp:detail', kwargs={'pk':self.object.pk})
     
+    
+
 class ArticleDetailView(DetailView, FormMixin):
     model = Article
     form_class = CommentCreationForm
@@ -55,8 +60,55 @@ class ArticleDeleteView(DeleteView):
     success_url = reverse_lazy('articleapp:list')
     template_name = 'articleapp/delete.html' 
 
+from django.db.models import Q
+from datetime import datetime
+
 class ArticleListView(ListView):
-    model= Article
+    model = Article
     context_object_name = 'article_list'
     template_name = 'articleapp/list.html'
-    paginate_by = 5
+    paginate_by = 25
+    
+    def get_queryset(self):
+        queryset = Article.objects.filter(hide=False)
+        search_keyword = self.request.GET.get('search_keyword', '')
+        search_field = self.request.GET.get('search_field', '')
+        date_range = self.request.GET.get('date_range', '')
+
+        if search_field == 'title' and search_keyword:
+            queryset = queryset.filter(title__icontains=search_keyword)
+        elif search_field == 'date':
+            if date_range and ' ~ ' in date_range:
+                # 날짜 범위를 '-'로 분리
+                start_date_str, end_date_str = date_range.split(' ~ ')
+                start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+                end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+
+                # date 및 datetime 필드에서 날짜 범위로 검색
+                queryset = queryset.filter(
+                    Q(date__range=(start_date, end_date)) |
+                    Q(datetime__date__range=(start_date, end_date))
+                )
+            elif search_keyword:
+                # 날짜 검색어가 있을 경우 이전 로직 유지
+                queryset = queryset.filter(
+                    Q(date__icontains=search_keyword) |
+                    Q(datetime__date__icontains=search_keyword)
+                )
+        elif search_field == 'project' and search_keyword:
+            queryset = queryset.filter(project__title__icontains=search_keyword)
+        elif search_field == 'artist' and search_keyword:
+            queryset = queryset.filter(artist__name__icontains=search_keyword)
+
+        return queryset
+
+        
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search_form'] = ArticleSearchForm(self.request.GET or None)
+        context['search_field'] = self.request.GET.get('search_field', 'title')  # 검색 필드 추가
+        return context
+    
+
+    
+    

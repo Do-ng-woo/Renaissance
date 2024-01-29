@@ -5,20 +5,21 @@
 
 <style>
     .container {
+        margin: 0 auto;
         padding: 0;
-        margin: 0, auto;
     }
     
     .container a {
         width: 45%;
         max-width: 250px;
-        
+        margin: 40px; /* 상하좌우 마진 추가 */
     }
+    
     .container div {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      border-radius: 1rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 1rem;
     }
     
     .container img {
@@ -26,32 +27,80 @@
         border-radius: 1rem;
     }
 
+    .search-form {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+    }
+
+    .search-form div {
+        display: flex;
+        align-items: center;
+        margin-right: 10px;
+    }
+
+    .search-button {
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
 </style>
-    {% if article_list %}
+
+<form method="get" action="{% url 'articleapp:list' %}" class="search-form">
+    <div>
+        {{ search_form.search_field }}
+        {{ search_form.search_keyword }}
+        {{ search_form.date_range }}
+    </div>
+    <button type="submit" class="search-button">검색</button>
+</form>
+
+{% if article_list %}
     <div class="container">
-        
         {% for article in article_list %}
-        <a href="{% url 'articleapp:detail' pk=article.pk %}">
-            {% include 'snippets/card.html' with article=article %}
-        </a>
+            <a href="{% url 'articleapp:detail' pk=article.pk %}">
+                {% include 'snippets/card.html' with article=article search_field=search_field %}
+            </a>
         {% endfor %}
-            
     </div>
     <script src="{% static 'js/magicgrid.js' %}"></script>
-    {% else %}
-    <div style="text-align:center" >
-        <h1>
-            No Articles Yet!!!!!
-        </h1>
-    </div>
-    {% endif %}
-    
-    {% include 'snippets/pagination.html' with pageobj=page_obj %}
-    <div style="text-align: center">
-        <a href="{% url 'articleapp:create' %}" class="btn btn-dark rounded-pill col-3 mt-3 mb-3 px-3 ">
-        Create Article
-        </a>
-    </div>
 
+{% else %}
+    <div style="text-align:center">
+        <h1>No Articles Yet!!!!!</h1>
+    </div>
+{% endif %}
+
+{% include 'snippets/pagination.html' with pageobj=page_obj %}
+
+<div style="text-align: center">
+    <a href="{% url 'articleapp:create' %}" class="btn btn-dark rounded-pill col-3 mt-3 mb-3 px-3">
+        Create Article
+    </a>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var searchField = document.getElementById('id_search_field');
+    var keywordField = document.getElementById('id_search_keyword');
+    var dateField = document.getElementById('id_date_range');
+
+    function toggleDateField() {
+        if (searchField.value === 'date') {
+            keywordField.style.display = 'none';
+            dateField.style.display = 'block';
+        } else {
+            keywordField.style.display = 'block';
+            dateField.style.display = 'none';
+        }
+    }
+
+    toggleDateField();
+    searchField.addEventListener('change', toggleDateField);
+});
+</script>
 
 {% endblock %}

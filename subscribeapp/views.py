@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 
 # Create your views here.
 from django.urls import reverse
@@ -7,9 +8,10 @@ from django.utils.decorators import method_decorator
 from django.views.generic import RedirectView, ListView, TemplateView
 from django.shortcuts import get_object_or_404
 
-from subscribeapp.models import P_Subscription, A_Subscription
+from subscribeapp.models import P_Subscription, A_Subscription, Per_Subscription
 from projectapp.models import Project
 from artistapp.models import Artist
+from personapp.models import Person
 from articleapp.models import Article
 
 
@@ -36,7 +38,7 @@ class P_SubscriptionListView(ListView):
     model = Article
     context_object_name = 'article_list'
     template_name = 'subscribeapp/P_list.html'
-    paginate_by = 5
+    paginate_by = 25
     
     def get_queryset(self):
         projects = P_Subscription.objects.filter(user=self.request.user).values_list('project')
@@ -66,10 +68,57 @@ class A_SubscriptionListView(ListView):
     model = Article
     context_object_name = 'article_list'
     template_name = 'subscribeapp/A_list.html'
-    paginate_by = 5
+    paginate_by = 25
     
     def get_queryset(self):
         artists = A_Subscription.objects.filter(user=self.request.user).values_list('artist')
         article_list = Article.objects.filter(artist__in=artists)
         return article_list
     
+@method_decorator(login_required,'get')
+class Per_SubscriptionView(RedirectView):
+    
+    def get_redirect_url(self, *args, **kwargs):
+        return reverse('personapp:detail', kwargs={'pk':self.request.GET.get('person_pk')})
+    
+    def get(self,request,*args,**kwargs):
+        person = get_object_or_404(Person, pk=self.request.GET.get('person_pk'))
+        user = self.request.user
+        subscription = Per_Subscription.objects.filter(user=user, person=person)
+        
+        if subscription.exists():
+            subscription.delete()
+        else:
+            Per_Subscription(user=user,person=person).save()
+        return super(Per_SubscriptionView,self).get(request, *args, **kwargs)
+
+@method_decorator(login_required,'get')
+class Per_SubscriptionListView(ListView):
+    model = Person
+    context_object_name = 'person_list'
+    template_name = 'subscribeapp/Per_list.html'
+    paginate_by = 25
+    
+    def get_queryset(self):
+        persons = Per_Subscription.objects.filter(user=self.request.user).values_list('person')
+        article_list = Article.objects.filter(person__in=persons)
+        return article_list
+    
+@method_decorator(login_required, 'get')
+class CombinedSubscriptionListView(ListView):
+    model = Article
+    context_object_name = 'article_list'
+    template_name = 'subscribeapp/C_list.html'  # 여기에 통합 템플릿 이름을 업데이트하세요
+    paginate_by = 25
+
+    def get_queryset(self):
+        # 사용자가 구독한 프로젝트와 아티스트 가져오기
+        subscribed_projects = P_Subscription.objects.filter(user=self.request.user).values_list('project', flat=True)
+        subscribed_artists = A_Subscription.objects.filter(user=self.request.user).values_list('artist', flat=True)
+        subscribed_persons = Per_Subscription.objects.filter(user=self.request.user).values_list('person', flat=True)
+
+        # 구독한 프로젝트와 아티스트에 관련된 글들 가져오기
+        article_list = Article.objects.filter(
+            Q(project__in=subscribed_projects) | Q(artist__in=subscribed_artists) | Q(person__in=subscribed_persons)
+        ).distinct()  # 중복 항목을 피하기 위해 distinct() 사용
+        return article_list

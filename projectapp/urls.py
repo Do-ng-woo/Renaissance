@@ -1,5 +1,6 @@
-from projectapp.views import ProjectListView, ProjectCreateView, ProjectDetailView, ProjectDeleteView
+from projectapp.views import ProjectListView, ProjectCreateView, ProjectDetailView, ProjectDeleteView, ProjectUpdateView, project_delete_description
 from django.urls import path, include
+from django.views.generic import TemplateView
 
 app_name = 'projectapp'
 
@@ -8,5 +9,7 @@ urlpatterns = [
     path('create/', ProjectCreateView.as_view(template_name='projectapp/create.html'), name='create'),
     path('detail/<int:pk>', ProjectDetailView.as_view(template_name='projectapp/detail.html'), name='detail'),
     path('delete/<int:pk>', ProjectDeleteView.as_view(template_name='projectapp/delete.html'), name='delete'),
+    path('update/<int:pk>', ProjectUpdateView.as_view(template_name='projectapp/update.html'), name='update'),
+    path('project_delete_description/', project_delete_description, name='project_delete_description'),
     
 ]
